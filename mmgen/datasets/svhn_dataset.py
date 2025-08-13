@@ -35,7 +35,7 @@ class SVHNDataset(Dataset):
 
     def prepare_data(self, idx):
         """Chuẩn bị ảnh và nhãn"""
-        img = Image.fromarray(self.imgs[idx])
+        img = np.array(self.imgs[idx])  # <-- np.ndarray
         label = int(self.labels[idx])
         results = dict(img=img, gt_label=label)
         return self.pipeline(results)
