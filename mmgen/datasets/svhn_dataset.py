@@ -5,50 +5,46 @@ from .builder import DATASETS
 from .pipelines import Compose
 import scipy.io as sio
 from PIL import Image
+import numpy as np
 
 @DATASETS.register_module()
 class SVHNDataset(Dataset):
-    """SVHN dataset for Conditional GANs.
+    """SVHN dataset từ file .mat cho Conditional GANs.
 
     Args:
-        data_prefix (str): folder chứa ảnh train/val/test
-        ann_file (str): file nhãn dạng txt (image_name label)
+        mat_file (str): đường dẫn tới file .mat (train_32x32.mat hoặc test_32x32.mat)
         pipeline (list[dict | callable]): danh sách transform
         test_mode (bool): nếu True sẽ load test
     """
 
-    _VALID_IMG_SUFFIX = ('.jpg', '.png', '.jpeg')
-
-    def __init__(self, data_prefix, ann_file, pipeline, test_mode=False):
+    def __init__(self, mat_file, pipeline, test_mode=False):
         super().__init__()
-        self.data_prefix = data_prefix
-        self.ann_file = ann_file
+        self.mat_file = mat_file
         self.pipeline = Compose(pipeline)
         self.test_mode = test_mode
-        self.img_infos = self.load_annotations()
+
+        self.imgs, self.labels = self.load_annotations()
 
     def load_annotations(self):
-        """Load image paths và nhãn từ file txt"""
-        img_infos = []
-        with open(self.ann_file, 'r') as f:
-            lines = f.readlines()
-        for line in lines:
-            img_name, label = line.strip().split()
-            img_path = osp.join(self.data_prefix, img_name)
-            img_infos.append(dict(img_path=img_path, gt_label=int(label)))
-        return img_infos
+        """Load dữ liệu từ file .mat"""
+        data = sio.loadmat(self.mat_file)
+        imgs = np.transpose(data['X'], (3, 0, 1, 2))  # (N, H, W, C)
+        labels = data['y'].squeeze()  # nhãn từ 1..10, 10 = số 0
+        labels[labels == 10] = 0
+        return imgs, labels.astype(int)
 
     def prepare_data(self, idx):
         """Chuẩn bị ảnh và nhãn"""
-        results = dict(img=self.img_infos[idx]['img_path'],
-                       gt_label=self.img_infos[idx]['gt_label'])
+        img = Image.fromarray(self.imgs[idx])
+        label = int(self.labels[idx])
+        results = dict(img=img, gt_label=label)
         return self.pipeline(results)
 
     def __getitem__(self, idx):
         return self.prepare_data(idx)
 
     def __len__(self):
-        return len(self.img_infos)
+        return len(self.labels)
 
     def __repr__(self):
-        return f"SVHNDataset(num_images={len(self)}, data_prefix='{self.data_prefix}')"
+        return f"SVHNDataset(num_images={len(self)}, mat_file='{self.mat_file}')"
