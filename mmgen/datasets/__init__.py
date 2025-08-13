@@ -2,6 +2,7 @@
 from .builder import build_dataloader, build_dataset
 from .dataset_wrappers import RepeatDataset
 from .grow_scale_image_dataset import GrowScaleImgDataset
+from .svhn_dataset import SVHNDataset
 from .paired_image_dataset import PairedImageDataset
 from .pipelines import (Collect, Compose, Flip, ImageToTensor,
                         LoadImageFromFile, Normalize, Resize, ToTensor)
@@ -16,5 +17,5 @@ __all__ = [
     'DistributedSampler', 'UnconditionalImageDataset', 'Compose', 'ToTensor',
     'ImageToTensor', 'Collect', 'Flip', 'Resize', 'RepeatDataset', 'Normalize',
     'GrowScaleImgDataset', 'SinGANDataset', 'PairedImageDataset',
-    'UnpairedImageDataset', 'QuickTestImageDataset'
+    'UnpairedImageDataset', 'QuickTestImageDataset', 'SVHNDataset'
 ]
